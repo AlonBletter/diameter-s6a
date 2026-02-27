@@ -1,0 +1,1 @@
+rootProject.name = "diameter-s6a"
