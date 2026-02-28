@@ -1,48 +1,16 @@
 package diameter.reporter;
 
-public class SummaryReporter {
-    private int totalMessages;
-    private int numberOfValidMessages;
-    private int numberOfInvalidMessages;
-    private int numberOfCompletedTransactions;
-    private int numberOfIncompleteTransactions;
+public interface SummaryReporter {
 
-    public SummaryReporter() {
-        this.totalMessages = 0;
-        this.numberOfValidMessages = 0;
-        this.numberOfInvalidMessages = 0;
-        this.numberOfCompletedTransactions = 0;
-        this.numberOfIncompleteTransactions = 0;
-    }
+    void incrementTotalMessages();
 
-    public void incrementTotalMessages() {
-        this.totalMessages++;
-    }
+    void incrementNumberOfValidMessages();
 
-    public void incrementNumberOfValidMessages() {
-        this.numberOfValidMessages++;
-    }
+    void incrementNumberOfInvalidMessages();
 
-    public void incrementNumberOfInvalidMessages() {
-        this.numberOfInvalidMessages++;
-    }
+    void setNumberOfCompletedTransactions(int numberOfCompletedTransactions);
 
-    public void setNumberOfCompletedTransactions(int numberOfCompletedTransactions) {
-        this.numberOfCompletedTransactions = numberOfCompletedTransactions;
-    }
+    void setNumberOfIncompleteTransactions(int numberOfIncompleteTransactions);
 
-    public void setNumberOfIncompleteTransactions(int numberOfIncompleteTransactions) {
-        this.numberOfIncompleteTransactions = numberOfIncompleteTransactions;
-    }
-
-    public String getReport() {
-        return String.format(
-                "Total Messages: %d%n" +
-                "Valid Messages: %d%n" +
-                "Invalid Messages: %d%n" +
-                "Completed Transactions: %d%n" +
-                "Incomplete Transactions: %d",
-                totalMessages, numberOfValidMessages, numberOfInvalidMessages, numberOfCompletedTransactions,
-                numberOfIncompleteTransactions);
-    }
+    String getReport();
 }

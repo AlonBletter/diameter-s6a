@@ -1,12 +1,12 @@
 package diameter.app;
 
+import diameter.csv.parser.CsvParser;
+import diameter.exception.validation.DiameterMessageValidationException;
 import diameter.reporter.SummaryReporter;
 import diameter.domain.message.DiameterMessage;
 import diameter.domain.MessageFactory;
 import diameter.csv.model.CsvRow;
-import diameter.csv.parser.CsvParser;
 import diameter.exception.transaction.TransactionException;
-import diameter.exception.validation.ValidationException;
 import diameter.transaction.TransactionManager;
 import diameter.io.FileReader;
 import diameter.validator.MessageValidator;
@@ -15,16 +15,22 @@ import diameter.validator.ValidationResult;
 import java.util.List;
 
 public final class AppManager {
-    private final CsvParser          parser;
+    private final CsvParser          csvParser;
+    private final MessageFactory     messageFactory;
     private final MessageValidator   validator;
     private final TransactionManager transactionManager;
     private final SummaryReporter    summaryReporter;
 
-    public AppManager() {
-        this.parser = new CsvParser();
-        this.validator = new MessageValidator();
-        this.transactionManager = TransactionManager.getInstance();
-        this.summaryReporter = new SummaryReporter();
+    public AppManager(CsvParser csvParser,
+                      MessageFactory messageFactory,
+                      TransactionManager transactionManager,
+                      MessageValidator validator,
+                      SummaryReporter summaryReporter) {
+        this.csvParser = csvParser;
+        this.messageFactory = messageFactory;
+        this.validator = validator;
+        this.transactionManager = transactionManager;
+        this.summaryReporter = summaryReporter;
     }
 
     public void run(String[] args) {
@@ -37,16 +43,16 @@ public final class AppManager {
         handleMessagesToTransactions(rows);
     }
 
-    private void handleMessagesToTransactions(List<CsvRow> rows) {
-        for (CsvRow row : rows) {
+    private void handleMessagesToTransactions(List<CsvRow> csvRows) {
+        for (CsvRow csvRow : csvRows) {
             try {
                 summaryReporter.incrementTotalMessages();
-                DiameterMessage  diameterMessage = MessageFactory.createMessage(row);
+                DiameterMessage  diameterMessage = messageFactory.createDiameterMessage(csvRow);
                 ValidationResult validationResult = validator.validate(diameterMessage);
                 handleValidationResult(validationResult, diameterMessage);
             } catch (TransactionException e) {
                 System.err.println(e.getMessage());
-            } catch (ValidationException e) {
+            } catch (DiameterMessageValidationException e) {
                 summaryReporter.incrementNumberOfInvalidMessages();
             } catch (Exception e) {
                 System.err.println("Unexpected error processing message: " + e.getMessage());
@@ -61,13 +67,13 @@ public final class AppManager {
 
     private List<CsvRow> getCsvRows(String[] args) {
         List<String> csvContent = FileReader.getLinesFromFile(args);
-        return parser.parse(csvContent);
+        return csvParser.parse(csvContent);
     }
 
     private void handleValidationResult(ValidationResult validationResult, DiameterMessage diameterMessage) {
         if (validationResult.isValid()) {
             summaryReporter.incrementNumberOfValidMessages();
-            transactionManager.addMessage(diameterMessage);
+            transactionManager.processDiameterMessage(diameterMessage);
         } else {
             summaryReporter.incrementNumberOfInvalidMessages();
         }

@@ -1,4 +1,4 @@
-package diameter.csv.parser;
+package diameter.csv;
 
 public enum CsvColumn {
     MESSAGE_TYPE,
