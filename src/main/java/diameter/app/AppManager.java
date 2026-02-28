@@ -33,12 +33,12 @@ public final class AppManager {
             return;
         }
 
-        var rows = getCsvRows(args);
+        List<CsvRow> rows = getCsvRows(args);
         handleMessagesToTransactions(rows);
     }
 
     private void handleMessagesToTransactions(List<CsvRow> rows) {
-        for (var row : rows) {
+        for (CsvRow row : rows) {
             try {
                 summaryReporter.incrementTotalMessages();
                 DiameterMessage  diameterMessage = MessageFactory.createMessage(row);

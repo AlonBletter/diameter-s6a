@@ -4,21 +4,23 @@ import diameter.domain.MessageType;
 import diameter.csv.model.CsvRow;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 public class CsvParser {
-    private static final String DELIMITER = ",";
+    private static final String                  DELIMITER = ",";
+    private final        Map<CsvColumn, Integer> headerMap = new EnumMap<>(CsvColumn.class);
 
     public List<CsvRow> parse(List<String> lines) {
         List<CsvRow> rows = new ArrayList<>();
+        String[] headers = lines.getFirst().split(DELIMITER, -1);
 
-        boolean isFirstLine = true;
-        for (String line : lines) {
-            if (isFirstLine) {
-                isFirstLine = false;
-                continue;
-            }
+        for (int i = 0; i < headers.length; i++) {
+            headerMap.put(CsvColumn.valueOf(headers[i].toUpperCase()), i);
+        }
 
+        for (String line : lines.subList(1, lines.size())) {
             rows.add(parseLine(line));
         }
 
@@ -29,15 +31,14 @@ public class CsvParser {
         // message_type,is_request,session_id,origin_host,origin_realm,user_name,visited_plmn_id,result_code
         String[] parts = line == null ? new String[0] : line.split(DELIMITER, -1);
 
-        MessageType messageType = MessageType.valueOf(get(parts, 0));
-        boolean isRequest = Boolean.parseBoolean(get(parts, 1));
-
-        String sessionId = emptyToNull(get(parts, 2));
-        String originHost = emptyToNull(get(parts, 3));
-        String originRealm = emptyToNull(get(parts, 4));
-        String userName = emptyToNull(get(parts, 5));
-        String visitedPlmnId = emptyToNull(get(parts, 6));
-        String resultCode = emptyToNull(get(parts, 7));
+        MessageType messageType   = MessageType.valueOf(get(parts, headerMap.get(CsvColumn.MESSAGE_TYPE)));
+        boolean     isRequest     = Boolean.parseBoolean(get(parts, headerMap.get(CsvColumn.IS_REQUEST)));
+        String      sessionId     = emptyToNull(get(parts, headerMap.get(CsvColumn.SESSION_ID)));
+        String      originHost    = emptyToNull(get(parts, headerMap.get(CsvColumn.ORIGIN_HOST)));
+        String      originRealm   = emptyToNull(get(parts, headerMap.get(CsvColumn.ORIGIN_REALM)));
+        String      userName      = emptyToNull(get(parts, headerMap.get(CsvColumn.USER_NAME)));
+        String      visitedPlmnId = emptyToNull(get(parts, headerMap.get(CsvColumn.VISITED_PLMN_ID)));
+        String      resultCode    = emptyToNull(get(parts, headerMap.get(CsvColumn.RESULT_CODE)));
 
         return new CsvRow(
                 messageType,
