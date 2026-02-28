@@ -1,0 +1,10 @@
+message_type,is_request,session_id,origin_host,origin_realm,user_name,visited_plmn_id,result_code
+AIR,true,sess-1,mme1.example.com,example.com,001010123456789,,
+AIA,false,sess-1,hss1.example.com,example.com,, ,2001
+ULR,true,sess-2,mme1.example.com,example.com,001010987654321,00101,
+ULA,false,sess-2,hss1.example.com,example.com,, ,2001
+AIR,true,sess-3,mme2.example.com,example.com,001010555555555,,
+AIA,false,sess-3,hss2.example.com,example.com,, ,2002
+ULR,true,sess-4,mme2.example.com,example.com,001010666666666,00102,
+ULA,false,sess-4,hss2.example.com,example.com,, ,2002
+ULA,false,sess-99,hss2.example.com,example.com,, ,5001

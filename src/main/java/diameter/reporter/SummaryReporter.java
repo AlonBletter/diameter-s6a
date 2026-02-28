@@ -1,13 +1,13 @@
-package diameter.csv.model;
+package diameter.reporter;
 
-public class MessagesSummary {
+public class SummaryReporter {
     private int totalMessages;
     private int numberOfValidMessages;
     private int numberOfInvalidMessages;
     private int numberOfCompletedTransactions;
     private int numberOfIncompleteTransactions;
 
-    public MessagesSummary() {
+    public SummaryReporter() {
         this.totalMessages = 0;
         this.numberOfValidMessages = 0;
         this.numberOfInvalidMessages = 0;
@@ -37,7 +37,11 @@ public class MessagesSummary {
 
     public String getReport() {
         return String.format(
-                "Total Messages: %d%nValid Messages: %d%nInvalid Messages: %d%nCompleted Transactions: %d%nIncomplete Transactions: %d",
+                "Total Messages: %d%n" +
+                "Valid Messages: %d%n" +
+                "Invalid Messages: %d%n" +
+                "Completed Transactions: %d%n" +
+                "Incomplete Transactions: %d",
                 totalMessages, numberOfValidMessages, numberOfInvalidMessages, numberOfCompletedTransactions,
                 numberOfIncompleteTransactions);
     }

@@ -12,7 +12,13 @@ public class CsvParser {
     public List<CsvRow> parse(List<String> lines) {
         List<CsvRow> rows = new ArrayList<>();
 
+        boolean isFirstLine = true;
         for (String line : lines) {
+            if (isFirstLine) {
+                isFirstLine = false;
+                continue;
+            }
+
             rows.add(parseLine(line));
         }
 

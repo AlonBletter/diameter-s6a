@@ -1,6 +1,6 @@
 package diameter.app;
 
-import diameter.csv.model.MessagesSummary;
+import diameter.reporter.SummaryReporter;
 import diameter.domain.message.DiameterMessage;
 import diameter.domain.MessageFactory;
 import diameter.csv.model.CsvRow;
@@ -18,13 +18,13 @@ public final class AppManager {
     private final CsvParser          parser;
     private final MessageValidator   validator;
     private final TransactionManager transactionManager;
-    private final MessagesSummary    messagesSummary;
+    private final SummaryReporter    summaryReporter;
 
     public AppManager() {
         this.parser = new CsvParser();
         this.validator = new MessageValidator();
         this.transactionManager = TransactionManager.getInstance();
-        this.messagesSummary = new MessagesSummary();
+        this.summaryReporter = new SummaryReporter();
     }
 
     public void run(String[] args) {
@@ -40,29 +40,29 @@ public final class AppManager {
     private void handleMessagesToTransactions(List<CsvRow> rows) {
         for (var row : rows) {
             try {
-                messagesSummary.incrementTotalMessages();
+                summaryReporter.incrementTotalMessages();
                 DiameterMessage  diameterMessage = MessageFactory.createMessage(row);
                 ValidationResult validationResult = validator.validate(diameterMessage);
 
                 if (validationResult.isValid()) {
-                    messagesSummary.incrementNumberOfValidMessages();
+                    summaryReporter.incrementNumberOfValidMessages();
                     transactionManager.addMessage(diameterMessage);
                 } else {
-                    messagesSummary.incrementNumberOfInvalidMessages();
+                    summaryReporter.incrementNumberOfInvalidMessages();
                 }
             } catch (TransactionException e) {
                 System.err.println(e.getMessage());
             } catch (ValidationException e) {
-                messagesSummary.incrementNumberOfInvalidMessages();
+                summaryReporter.incrementNumberOfInvalidMessages();
             } catch (Exception e) {
                 System.err.println("Unexpected error processing message: " + e.getMessage());
             }
         }
 
-        messagesSummary.setNumberOfCompletedTransactions(transactionManager.getNumberOfCompleteTransactions());
-        messagesSummary.setNumberOfIncompleteTransactions(transactionManager.getNumberOfIncompleteTransactions());
+        summaryReporter.setNumberOfCompletedTransactions(transactionManager.getNumberOfCompleteTransactions());
+        summaryReporter.setNumberOfIncompleteTransactions(transactionManager.getNumberOfIncompleteTransactions());
 
-        System.out.println(messagesSummary.getReport());
+        System.out.println(summaryReporter.getReport());
     }
 
     private List<CsvRow> getCsvRows(String[] args) {
