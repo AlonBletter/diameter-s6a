@@ -43,13 +43,7 @@ public final class AppManager {
                 summaryReporter.incrementTotalMessages();
                 DiameterMessage  diameterMessage = MessageFactory.createMessage(row);
                 ValidationResult validationResult = validator.validate(diameterMessage);
-
-                if (validationResult.isValid()) {
-                    summaryReporter.incrementNumberOfValidMessages();
-                    transactionManager.addMessage(diameterMessage);
-                } else {
-                    summaryReporter.incrementNumberOfInvalidMessages();
-                }
+                handleValidationResult(validationResult, diameterMessage);
             } catch (TransactionException e) {
                 System.err.println(e.getMessage());
             } catch (ValidationException e) {
@@ -68,6 +62,15 @@ public final class AppManager {
     private List<CsvRow> getCsvRows(String[] args) {
         List<String> csvContent = FileReader.getLinesFromFile(args);
         return parser.parse(csvContent);
+    }
+
+    private void handleValidationResult(ValidationResult validationResult, DiameterMessage diameterMessage) {
+        if (validationResult.isValid()) {
+            summaryReporter.incrementNumberOfValidMessages();
+            transactionManager.addMessage(diameterMessage);
+        } else {
+            summaryReporter.incrementNumberOfInvalidMessages();
+        }
     }
 }
 

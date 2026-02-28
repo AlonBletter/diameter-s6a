@@ -2,7 +2,7 @@ package diameter.transaction;
 
 import diameter.domain.message.DiameterMessage;
 import diameter.domain.MessageType;
-import diameter.exception.transaction.TransactionException;
+import diameter.exception.transaction.DuplicateTransactionException;
 import diameter.exception.transaction.UnexpectedTransactionAnswerException;
 
 import java.util.HashMap;
@@ -52,7 +52,7 @@ public class TransactionManager {
 
     private void handleRequestMessage(DiameterMessage message) {
         if (transactionsBySessionId.containsKey(message.getSessionId())) {
-            throw new TransactionException("Transaction with session ID " + message.getSessionId() + " already exists");
+            throw new DuplicateTransactionException(message.getSessionId());
         }
 
         incrementIncompleteTransactions();
@@ -82,6 +82,27 @@ public class TransactionManager {
 
     private void incrementIncompleteTransactions() {
         numberOfIncompleteTransactions++;
+    }
+
+    private static class Transaction {
+        private final DiameterMessage request;
+        private       DiameterMessage answer;
+
+        public Transaction(DiameterMessage request) {
+            this.request = request;
+        }
+
+        public DiameterMessage getRequest() {
+            return request;
+        }
+
+        public DiameterMessage getAnswer() {
+            return answer;
+        }
+
+        public void setAnswer(DiameterMessage answer) {
+            this.answer = answer;
+        }
     }
 }
 

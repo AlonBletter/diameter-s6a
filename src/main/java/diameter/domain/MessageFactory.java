@@ -2,7 +2,7 @@ package diameter.domain;
 
 import diameter.csv.model.CsvRow;
 import diameter.domain.message.*;
-import diameter.exception.validation.InvalidMessageTypeException;
+import diameter.exception.validation.ValidationException;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -47,7 +47,7 @@ public class MessageFactory {
         MessageDefinition definition = messageDefinitions.get(messageType);
 
         if (definition == null) {
-            throw new InvalidMessageTypeException("Unsupported message type: " + messageType);
+            throw new IllegalArgumentException("Unsupported message type: " + messageType);
         }
 
         return definition.create(row);
@@ -64,7 +64,7 @@ public class MessageFactory {
 
         public DiameterMessage create(CsvRow row) {
             if (row.getIsRequest() != expectedRequest) {
-                throw new InvalidMessageTypeException(
+                throw new ValidationException(
                         "Type mismatch: " + row.getMessageType() + " expected is_request=" + expectedRequest);
             }
             return constructor.apply(row);
