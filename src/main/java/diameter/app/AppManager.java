@@ -2,16 +2,19 @@ package diameter.app;
 
 import diameter.csv.parser.CsvParser;
 import diameter.exception.validation.DiameterMessageValidationException;
+import diameter.reporter.ProcessingResult;
 import diameter.reporter.SummaryReporter;
 import diameter.domain.message.DiameterMessage;
-import diameter.domain.MessageFactory;
+import diameter.domain.factory.MessageFactory;
 import diameter.csv.model.CsvRow;
 import diameter.exception.transaction.TransactionException;
 import diameter.transaction.TransactionManager;
 import diameter.io.FileReader;
+import diameter.transaction.TransactionResult;
 import diameter.validator.MessageValidator;
 import diameter.validator.ValidationResult;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class AppManager {
@@ -44,39 +47,47 @@ public final class AppManager {
     }
 
     private void handleMessagesToTransactions(List<CsvRow> csvRows) {
+        List<ProcessingResult> results = new ArrayList<>();
+
         for (CsvRow csvRow : csvRows) {
-            try {
-                summaryReporter.incrementTotalMessages();
-                DiameterMessage  diameterMessage = messageFactory.createDiameterMessage(csvRow);
-                ValidationResult validationResult = validator.validate(diameterMessage);
-                handleValidationResult(validationResult, diameterMessage);
-            } catch (TransactionException e) {
-                System.err.println(e.getMessage());
-            } catch (DiameterMessageValidationException e) {
-                summaryReporter.incrementNumberOfInvalidMessages();
-            } catch (Exception e) {
-                System.err.println("Unexpected error processing message: " + e.getMessage());
-            }
+            results.add(processSingleRow(csvRow));
         }
 
-        summaryReporter.setNumberOfCompletedTransactions(transactionManager.getNumberOfCompleteTransactions());
-        summaryReporter.setNumberOfIncompleteTransactions(transactionManager.getNumberOfIncompleteTransactions());
+        TransactionResult transactionResult = transactionManager.getTransactionResult();
 
-        System.out.println(summaryReporter.getReport());
+        summaryReporter.report(results, transactionResult);
+    }
+
+    private ProcessingResult processSingleRow(CsvRow csvRow) {
+        try {
+            ProcessingResult retVal;
+            DiameterMessage  diameterMessage  = messageFactory.createDiameterMessage(csvRow);
+            ValidationResult validationResult = validator.validate(diameterMessage);
+
+            if (!validationResult.isValid()) {
+                retVal = ProcessingResult.validationFailure();
+            }
+            else {
+                transactionManager.processDiameterMessage(diameterMessage);
+                retVal = ProcessingResult.success();
+            }
+
+            return retVal;
+        }
+        catch (DiameterMessageValidationException e) {
+            return ProcessingResult.validationFailure();
+        }
+        catch (TransactionException e) {
+            return ProcessingResult.error(e.getMessage());
+        }
+        catch (Exception e) {
+            return ProcessingResult.error("Unexpected error: " + e.getMessage());
+        }
     }
 
     private List<CsvRow> getCsvRows(String[] args) {
         List<String> csvContent = FileReader.getLinesFromFile(args);
         return csvParser.parse(csvContent);
-    }
-
-    private void handleValidationResult(ValidationResult validationResult, DiameterMessage diameterMessage) {
-        if (validationResult.isValid()) {
-            summaryReporter.incrementNumberOfValidMessages();
-            transactionManager.processDiameterMessage(diameterMessage);
-        } else {
-            summaryReporter.incrementNumberOfInvalidMessages();
-        }
     }
 }
 

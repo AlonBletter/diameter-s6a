@@ -1,7 +1,7 @@
 package diameter.app;
 
 import diameter.csv.parser.CsvParserImpl;
-import diameter.domain.MessageFactoryImpl;
+import diameter.domain.factory.MessageFactoryImpl;
 import diameter.reporter.SummaryReporterImpl;
 import diameter.transaction.TransactionManagerImpl;
 import diameter.validator.MessageValidatorImpl;

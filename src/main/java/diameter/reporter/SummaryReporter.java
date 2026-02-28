@@ -1,16 +1,9 @@
 package diameter.reporter;
 
+import diameter.transaction.TransactionResult;
+
+import java.util.List;
+
 public interface SummaryReporter {
-
-    void incrementTotalMessages();
-
-    void incrementNumberOfValidMessages();
-
-    void incrementNumberOfInvalidMessages();
-
-    void setNumberOfCompletedTransactions(int numberOfCompletedTransactions);
-
-    void setNumberOfIncompleteTransactions(int numberOfIncompleteTransactions);
-
-    String getReport();
+    void report(List<ProcessingResult> results, TransactionResult transactionResult);
 }

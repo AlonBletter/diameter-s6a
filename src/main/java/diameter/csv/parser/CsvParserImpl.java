@@ -107,7 +107,8 @@ public class CsvParserImpl implements CsvParser {
         String messageTypeStr = get(parts, headerMap.get(CsvColumn.MESSAGE_TYPE));
         try {
             MessageType.valueOf(messageTypeStr);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new CsvValidationException("Invalid message_type at line " + lineNumber + ": " + messageTypeStr);
         }
 

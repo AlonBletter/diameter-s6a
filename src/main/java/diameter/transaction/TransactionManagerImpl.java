@@ -38,19 +38,15 @@ public class TransactionManagerImpl implements TransactionManager {
 
         if (diameterMessage.getIsRequest()) {
             handleRequestMessage(diameterMessage);
-        } else {
+        }
+        else {
             handleAnswerMessage(diameterMessage);
         }
     }
 
     @Override
-    public int getNumberOfCompleteTransactions() {
-        return numberOfCompleteTransactions;
-    }
-
-    @Override
-    public int getNumberOfIncompleteTransactions() {
-        return numberOfIncompleteTransactions;
+    public TransactionResult getTransactionResult() {
+        return new TransactionResult(numberOfCompleteTransactions, numberOfIncompleteTransactions);
     }
 
     private void handleRequestMessage(DiameterMessage message) {

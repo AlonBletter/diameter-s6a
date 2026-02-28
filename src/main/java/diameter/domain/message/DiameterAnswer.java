@@ -12,12 +12,17 @@ public abstract class DiameterAnswer extends DiameterMessage {
                              String originRealm,
                              String userName,
                              String resultCode) {
-        super(messageType, false, sessionId, originHost, originRealm, userName);
+        super(messageType, sessionId, originHost, originRealm, userName);
         this.resultCode = resultCode;
     }
 
     @Override
     public void validate(ValidationResult result) {
         require(resultCode, "Result-Code is required", result);
+    }
+
+    @Override
+    public boolean getIsRequest() {
+        return false;
     }
 }

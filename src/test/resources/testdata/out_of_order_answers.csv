@@ -1,0 +1,8 @@
+message_type,is_request,session_id,origin_host,origin_realm,user_name,visited_plmn_id,result_code
+AIR,true,sess-1,mme1.example.com,example.com,user1,,
+AIR,true,sess-2,mme1.example.com,example.com,user2,,
+AIA,false,sess-2,hss1.example.com,example.com,,,2001
+ULR,true,sess-3,mme1.example.com,example.com,user3,00101,
+AIA,false,sess-1,hss1.example.com,example.com,,,2001
+ULA,false,sess-3,hss1.example.com,example.com,,,2001
+

@@ -4,21 +4,18 @@ import diameter.domain.MessageType;
 import diameter.validator.ValidationResult;
 
 public abstract class DiameterMessage {
-    private final MessageType messageType;
-    private final boolean     isRequest;
+    private final   MessageType messageType;
     protected final String      sessionId;
     protected final String      originHost;
     protected final String      originRealm;
     protected final String      userName;
 
     public DiameterMessage(MessageType messageType,
-                           boolean isRequest,
                            String sessionId,
                            String originHost,
                            String originRealm,
                            String userName) {
         this.messageType = messageType;
-        this.isRequest = isRequest;
         this.sessionId = sessionId;
         this.originHost = originHost;
         this.originRealm = originRealm;
@@ -28,7 +25,7 @@ public abstract class DiameterMessage {
     public abstract void validate(ValidationResult result);
 
     protected void require(String value, String errorMessage, ValidationResult result) {
-        if (value == null || value.isEmpty()) {
+        if (value == null || value.isBlank()) {
             result.addError(errorMessage);
         }
     }
@@ -37,9 +34,7 @@ public abstract class DiameterMessage {
         return messageType;
     }
 
-    public boolean getIsRequest() {
-        return isRequest;
-    }
+    public abstract boolean getIsRequest();
 
     public String getSessionId() {
         return sessionId;

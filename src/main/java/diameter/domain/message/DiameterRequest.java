@@ -9,7 +9,7 @@ public abstract class DiameterRequest extends DiameterMessage {
                               String originHost,
                               String originRealm,
                               String userName) {
-        super(messageType, true, sessionId, originHost, originRealm, userName);
+        super(messageType, sessionId, originHost, originRealm, userName);
     }
 
     @Override
@@ -18,5 +18,10 @@ public abstract class DiameterRequest extends DiameterMessage {
         require(originHost, "Origin-Host is mandatory", result);
         require(originRealm, "Origin-Realm is mandatory", result);
         require(userName, "User-Name is mandatory", result);
+    }
+
+    @Override
+    public boolean getIsRequest() {
+        return true;
     }
 }

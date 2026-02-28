@@ -1,54 +1,34 @@
 package diameter.reporter;
 
+import diameter.transaction.TransactionResult;
+
+import java.util.List;
+
 public class SummaryReporterImpl implements SummaryReporter {
-    private int totalMessages;
-    private int numberOfValidMessages;
-    private int numberOfInvalidMessages;
-    private int numberOfCompletedTransactions;
-    private int numberOfIncompleteTransactions;
-
-    public SummaryReporterImpl() {
-        this.totalMessages = 0;
-        this.numberOfValidMessages = 0;
-        this.numberOfInvalidMessages = 0;
-        this.numberOfCompletedTransactions = 0;
-        this.numberOfIncompleteTransactions = 0;
-    }
-
     @Override
-    public void incrementTotalMessages() {
-        this.totalMessages++;
-    }
+    public void report(List<ProcessingResult> results, TransactionResult transactionResult) {
+        long total   = results.size();
+        long valid   = results.stream().filter(ProcessingResult::isValid).count();
+        long invalid = total - valid;
 
-    @Override
-    public void incrementNumberOfValidMessages() {
-        this.numberOfValidMessages++;
-    }
+        String output = String.format(
+            "Total messages: %d\n" +
+            "Valid messages: %d\n" +
+            "Invalid messages: %d\n" +
+            "Completed transactions: %d\n" +
+            "Incomplete transactions: %d",
+            total,
+            valid,
+            invalid,
+            transactionResult.getNumberOfCompleteTransactions(),
+            transactionResult.getNumberOfIncompleteTransactions()
+        );
 
-    @Override
-    public void incrementNumberOfInvalidMessages() {
-        this.numberOfInvalidMessages++;
-    }
+        System.out.println(output);
 
-    @Override
-    public void setNumberOfCompletedTransactions(int numberOfCompletedTransactions) {
-        this.numberOfCompletedTransactions = numberOfCompletedTransactions;
-    }
-
-    @Override
-    public void setNumberOfIncompleteTransactions(int numberOfIncompleteTransactions) {
-        this.numberOfIncompleteTransactions = numberOfIncompleteTransactions;
-    }
-
-    @Override
-    public String getReport() {
-        return String.format(
-                "Total Messages: %d%n" +
-                "Valid Messages: %d%n" +
-                "Invalid Messages: %d%n" +
-                "Completed Transactions: %d%n" +
-                "Incomplete Transactions: %d",
-                totalMessages, numberOfValidMessages, numberOfInvalidMessages, numberOfCompletedTransactions,
-                numberOfIncompleteTransactions);
+        System.out.println("\nErrors:");
+        results.stream()
+               .filter(r -> r.getErrorMessage() != null)
+               .forEach(r -> System.err.println(r.getErrorMessage()));
     }
 }

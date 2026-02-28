@@ -1,6 +1,7 @@
-package diameter.domain;
+package diameter.domain.factory;
 
 import diameter.csv.model.CsvRow;
+import diameter.domain.MessageType;
 import diameter.domain.message.*;
 import diameter.exception.validation.DiameterMessageValidationException;
 
