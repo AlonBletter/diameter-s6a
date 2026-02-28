@@ -1,6 +1,6 @@
 # Diameter S6a CSV Processor
 
-A Java application that processes Diameter S6a protocol messages from CSV files, implementing message validation, transaction management, and summary reporting per 3GPP TS 29.272 specifications.
+A Java application that processes Diameter S6a protocol messages from CSV files, implementing message validation, transaction management, and summary reporting.
 
 ---
 
@@ -18,55 +18,7 @@ A Java application that processes Diameter S6a protocol messages from CSV files,
 
 ## Design Overview
 
-### High-Level Architecture
-
-```mermaid
-flowchart TB
-    subgraph Input
-        A[CSV File] --> B[FileReader]
-    end
-
-    subgraph Parsing
-        B --> C[CsvParser]
-        C --> D{Valid Header?}
-        D -->|No| E[Exit Program]
-        D -->|Yes| F[Parse Data Lines]
-        F --> G{Valid Row?}
-        G -->|No| H[Skip Row + Log Warning]
-        G -->|Yes| I[CsvRow]
-    end
-
-    subgraph Processing
-        I --> J[MessageFactory]
-        J --> K{Type Match?}
-        K -->|No| L[Validation Exception]
-        K -->|Yes| M[DiameterMessage]
-        M --> N[MessageValidator]
-        N --> O{Valid AVPs?}
-        O -->|No| P[Invalid Message]
-        O -->|Yes| Q[TransactionManager]
-        Q --> R{Is Request?}
-        R -->|Yes| S[Open Transaction]
-        R -->|No| T{Matching Request?}
-        T -->|Yes| U[Complete Transaction]
-        T -->|No| V[Invalid Answer]
-    end
-
-    subgraph Output
-        L --> W[ProcessingResult]
-        P --> W
-        S --> W
-        U --> W
-        V --> W
-        W --> X[SummaryReporter]
-        X --> Y[Print Summary]
-    end
-
-    style E fill:#ffcdd2
-    style H fill:#fff3e0
-    style Y fill:#c8e6c9
-```
-
+should be at the end and have a link here to the class diagram after key components.
 ### Class Diagram
 
 ```mermaid
@@ -192,24 +144,24 @@ classDiagram
 
 ### Design Patterns
 
-| Pattern | Usage |
-|---------|-------|
-| **Factory Method** | `MessageFactory` creates concrete message types (`AIR`, `AIA`, `ULR`, `ULA`) based on `MessageType` enum |
-| **Singleton** | `TransactionManagerImpl` uses double-checked locking singleton for centralized transaction state |
-| **Template Method** | `DiameterMessage.validate()` defines validation structure; subclasses extend with type-specific rules |
+| Pattern | Usage                                                                                                                                                                                                                                                                              |
+|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Factory Method** | `MessageFactory` creates concrete message types (`AIR`, `AIA`, `ULR`, `ULA`) based on `MessageType` enum - easy to sacale                                                                                                                                                          |
+| **Singleton** | `TransactionManagerImpl` uses double-checked locking singleton for centralized transaction state for future concurrency                                                                                                                                                            |
+| **Template Method** | `DiameterMessage.validate()` defines validation structure; subclasses extend with type-specific rules - passing the responsibility of the validation to the class writers making the system more scalable and maintainable                                                         |
 
 ### Separation of Validation Concerns
 
 Validation is split into two distinct layers:
 
-1. **Structural Validation** (in `MessageFactory`)
+1. **Structural Validation** (in `CsvParser` from raw `String` to `csvRow`)
    - Enforces type consistency (e.g., `AIR` must have `is_request=true`)
    - Fails fast with `DiameterMessageValidationException`
    - Prevents creation of structurally invalid objects
 
 2. **Mandatory Field Validation** (in `DiameterMessage` subclasses)
-   - Validates AVP presence per 3GPP specification
-   - Delegated to message classes for maintainability
+   - Validates AVP presence per specification
+   - Delegated to message classes for maintainability (unite with the design pattern)
    - Collects all errors (does not fail on first error)
 
 **Rationale:** This separation ensures that invalid objects cannot be constructed, while field validation remains extensible and localized to each message type.
@@ -234,7 +186,7 @@ Validation is split into two distinct layers:
 
 ### Protocol Extensibility
 
-The current design supports **non-extendable protocol** semantics:
+The current design supports **non-extendable protocol** semantics: (i think it is extendable - make sure, if not present the reflection options for the future)
 
 - Message types are defined as an enum (`MessageType`)
 - Adding new message types requires code changes to `MessageType`, `MessageFactory`, and validation rules
@@ -250,7 +202,7 @@ The current design supports **non-extendable protocol** semantics:
 
 ### CPU
 
-- **Complexity:** O(n) where n = number of CSV rows
+- **Complexity:** O(n) where n = number of CSV rows (every row has m fields that are not restricted to a specific size, so we can consider it O(n*m)) fix if needed
 - **Per-message operations:** O(1) - HashMap lookups, field validation
 - **No bottleneck:** String operations and map operations are efficient
 
@@ -280,14 +232,6 @@ The `TransactionManagerImpl.transactionsBySessionId` map holds all open (unmatch
 - `TransactionManagerImpl` becomes a contention point
 - Requires `ConcurrentHashMap` and atomic counters
 - Consider partitioning by Session-Id hash for lock-free scaling
-
-### Scalability Constraints
-
-| Constraint | Limit |
-|------------|-------|
-| File size | Limited by available heap memory |
-| Transaction count | Limited by heap; no eviction policy |
-| Throughput | Single-threaded; ~100K msg/sec typical |
 
 ---
 
@@ -342,15 +286,8 @@ Test data files in `src/test/resources/testdata/`:
 | `DuplicateTransactionException` | Same Session-Id twice | Asserts exception contains Session-Id |
 | `UnexpectedTransactionAnswerException` | Answer without request | Asserts exception and proper counter increment |
 
-### Production Safety Guarantees
-
-1. **Invariant enforcement:** `valid + invalid = total` verified in integration tests
-2. **No silent failures:** All exceptions are caught and counted
-3. **Deterministic behavior:** Tests are repeatable with no shared mutable state (singleton reset between tests)
-4. **Boundary testing:** Empty CSV, single message, large session IDs tested
-
 ### Invalid Answer Behavior
-
+This should be an assumption instead
 **Question:** Does an invalid answer increase the invalid message counter?
 
 **Answer:** Yes. When an answer arrives without a matching request:
@@ -361,25 +298,25 @@ Test data files in `src/test/resources/testdata/`:
 
 ---
 
+Should be at the beginning
 ## Assumptions
 
 1. **Input file format:** The input file is a valid CSV with the required columns in any order
-2. **AVP alignment:** Diameter request/answer AVP requirements differ (requests require User-Name; answers require Result-Code)
-3. **Common fields:** `sessionId`, `originHost`, `originRealm`, `userName` are defined in `DiameterMessage` base class
-4. **Session-Id uniqueness:** Each request has a unique Session-Id; duplicates are errors
-5. **Transaction pairing:** AIR must be answered by AIA; ULR must be answered by ULA
-6. **Single-threaded execution:** The application processes messages sequentially
+2. **Common fields:** `sessionId`, `originHost`, `originRealm`, `userName` are defined in `DiameterMessage` base class although it is not explicitly mentioned in the specification, it is implied by the example and the fact that they are mandatory for all message types, these fields are mandatory only in requests.
+3. **Session-Id uniqueness:** Each request has a unique Session-Id; duplicates are errors
+4. **Single-threaded execution:** The application processes messages sequentially
 
 ---
 
+Should be at the beginning
 ## AI Disclosure
 
 > **Transparency Notice**
 >
-> This project was developed with significant AI assistance:
+> This project was developed with AI assistance:
 >
+> - **Source Code:** Approximately **20%** of the code in `src/main/java` was AI-assisted, primarily in boilerplate generation and structural scaffolding. also was used to help design and solve engineering problems.
 > - **Test Suite:** Approximately **95%** of the test code was generated by AI, including test classes, test data files, and test utilities.
-> - **Production Code:** Approximately **20%** of the code in `src/main/java` was AI-assisted, primarily in boilerplate generation and structural scaffolding.
 > - **Documentation:** The system documentation and this README were authored by AI based on codebase analysis.
 >
 > All AI-generated code was reviewed and validated for correctness, adherence to specifications, and production quality standards.
@@ -411,30 +348,7 @@ Test data files in `src/test/resources/testdata/`:
 ./gradlew run --args="path/to/input.csv"
 ```
 
-### Project Structure
-
-```
-diameter-s6a/
-├── src/
-│   ├── main/java/diameter/
-│   │   ├── app/           # Application orchestration
-│   │   ├── csv/           # CSV parsing
-│   │   ├── domain/        # Message hierarchy & factory
-│   │   ├── exception/     # Custom exceptions
-│   │   ├── io/            # File I/O
-│   │   ├── reporter/      # Summary reporting
-│   │   ├── transaction/   # Transaction management
-│   │   └── validator/     # Message validation
-│   └── test/
-│       ├── java/diameter/ # Test classes
-│       └── resources/testdata/ # CSV test files
-├── docs/
-│   └── SYSTEM_DOCUMENTATION.md  # Extended technical documentation
-└── README.md
-```
-
----
-
+should be at the start
 ## Extended Documentation
 
 For detailed class diagrams, sub-process flows, and component specifications, see:

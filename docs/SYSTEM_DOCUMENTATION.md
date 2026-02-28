@@ -8,6 +8,7 @@
 5. [Sub-Process Flows](#sub-process-flows)
 6. [Component Details](#component-details)
 7. [Test Coverage](#test-coverage)
+8. [Appendix: Package Structure](#appendix-package-structure)
 
 ---
 
@@ -16,7 +17,7 @@
 The Diameter S6a CSV Processor is a Java application that processes Diameter S6a protocol messages from CSV files. It implements:
 
 - **Message Parsing**: Converts CSV rows into typed Diameter message objects
-- **Validation**: Enforces mandatory AVP (Attribute-Value Pair) rules per 3GPP TS 29.272
+- **Validation**: Enforces mandatory AVP (Attribute-Value Pair) rules per message type
 - **Transaction Management**: Tracks request/answer pairs by Session-Id
 - **Reporting**: Generates processing summaries with statistics
 
@@ -35,20 +36,13 @@ The Diameter S6a CSV Processor is a Java application that processes Diameter S6a
 
 The system follows a layered architecture with clear separation of concerns:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Application Layer                        │
-│                         (AppManager)                            │
-├─────────────────────────────────────────────────────────────────┤
-│    CSV Layer    │   Domain Layer   │   Validation Layer         │
-│   (CsvParser)   │ (MessageFactory) │  (MessageValidator)        │
-├─────────────────────────────────────────────────────────────────┤
-│                     Transaction Layer                           │
-│                   (TransactionManager)                          │
-├─────────────────────────────────────────────────────────────────┤
-│                      Reporting Layer                            │
-│                    (SummaryReporter)                            │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    A["Raw CSV Input"] --> B["CSV Layer (CsvParser)"]
+    B --> C["Domain Layer (MessageFactory)"]
+    C --> D["Validation Layer (MessageValidator)"]
+    D --> E["Transaction Layer (TransactionManager)"]
+    E --> F["Reporting Layer (SummaryReporter)"]
 ```
 
 ---
@@ -331,88 +325,47 @@ flowchart TB
     subgraph Parsing
         B --> C[CsvParser]
         C --> D{Valid Header?}
-        D -->|No| E[Throw CsvValidationException]
+        D -->|No| E[Exit Program]
         D -->|Yes| F[Parse Data Lines]
-        F --> G[List of CsvRow]
+        F --> G{Valid Row?}
+        G -->|No| H[Skip Row + Log Warning]
+        G -->|Yes| I[CsvRow]
     end
 
-    subgraph Processing["Message Processing Loop"]
-        G --> H[For Each CsvRow]
-        H --> I[MessageFactory]
-        I --> J{Type Match?}
-        J -->|No| K[DiameterMessageValidationException]
-        J -->|Yes| L[Create DiameterMessage]
-        L --> M[MessageValidator]
-        M --> N{Valid AVPs?}
-        N -->|No| O[ValidationFailure Result]
-        N -->|Yes| P[TransactionManager]
-        P --> Q{Is Request?}
-        Q -->|Yes| R[Open Transaction]
-        Q -->|No| S{Has Matching Request?}
-        S -->|Yes| T[Complete Transaction]
-        S -->|No| U[TransactionException]
-        
-        K --> V[Error Result]
-        O --> W[Collect Results]
-        R --> W
-        T --> W
-        U --> V
-        V --> W
+    subgraph Processing
+        I --> J[MessageFactory]
+        J --> K{Type Match?}
+        K -->|No| L[Validation Exception]
+        K -->|Yes| M[DiameterMessage]
+        M --> N[MessageValidator]
+        N --> O{Valid AVPs?}
+        O -->|No| P[Invalid Message]
+        O -->|Yes| Q[TransactionManager]
+        Q --> R{Is Request?}
+        R -->|Yes| S[Open Transaction]
+        R -->|No| T{Matching Request?}
+        T -->|Yes| U[Complete Transaction]
+        T -->|No| V[Invalid Answer]
     end
 
     subgraph Output
+        L --> W[ProcessingResult]
+        P --> W
+        S --> W
+        U --> W
+        V --> W
         W --> X[SummaryReporter]
         X --> Y[Print Summary]
-        Y --> Z["Total/Valid/Invalid Messages<br>Completed/Open Transactions"]
     end
 
-    style A fill:#e1f5fe
-    style Z fill:#c8e6c9
-    style E fill:#ffcdd2
-    style K fill:#ffcdd2
-    style U fill:#ffcdd2
+   style E fill:#b71c1c,stroke:#000,stroke-width:1px   %% Dark red
+   style H fill:#e65100,stroke:#000,stroke-width:1px   %% Deep orange
+   style Y fill:#2e7d32,stroke:#000,stroke-width:1px   %% Dark green
 ```
 
 ---
 
 ## Sub-Process Flows
-
-### CSV Parsing Flow
-
-```mermaid
-flowchart TD
-    A[Raw CSV Lines] --> B{Lines Empty?}
-    B -->|Yes| C[Throw CsvValidationException]
-    B -->|No| D[Extract Header Line]
-    D --> E[Validate Header]
-    E --> F{All Required Columns?}
-    F -->|No| G[Throw CsvValidationException]
-    F -->|Yes| H[Build Column Index Map]
-    H --> I[Process Data Lines]
-    
-    subgraph LineProcessing["For Each Data Line"]
-        I --> J[Split by Delimiter]
-        J --> K{Correct Column Count?}
-        K -->|No| L[Skip Line + Log Warning]
-        K -->|Yes| M{Valid MessageType?}
-        M -->|No| L
-        M -->|Yes| N{Valid is_request?}
-        N -->|No| L
-        N -->|Yes| O[Create CsvRow]
-        O --> P[Add to Result List]
-    end
-    
-    L --> Q[Continue Loop]
-    P --> Q
-    Q --> R{More Lines?}
-    R -->|Yes| I
-    R -->|No| S[Return CsvRow List]
-
-    style C fill:#ffcdd2
-    style G fill:#ffcdd2
-    style L fill:#fff3e0
-    style S fill:#c8e6c9
-```
 
 ### Message Validation Flow
 
@@ -451,8 +404,8 @@ flowchart TD
     S -->|Yes| T[Return Invalid Result]
     S -->|No| U[Return Valid Result]
 
-    style T fill:#ffcdd2
-    style U fill:#c8e6c9
+    style T fill:#b71c1c,stroke:#000,stroke-width:1px   %% Dark red
+    style U fill:#2e7d32,stroke:#000,stroke-width:1px   %% Dark green
 ```
 
 ### Transaction Management Flow
@@ -483,10 +436,11 @@ flowchart TD
     O --> S
     R --> S
 
-    style C fill:#ffcdd2
-    style G fill:#ffcdd2
-    style M fill:#ffcdd2
-    style S fill:#c8e6c9
+    style C fill:#b71c1c,stroke:#000,stroke-width:1px   %% Dark red
+    style G fill:#e65100,stroke:#000,stroke-width:1px   %% Deep orange
+    style M fill:#e65100,stroke:#000,stroke-width:1px   %% Deep orange
+    style S fill:#2e7d32,stroke:#000,stroke-width:1px   %% Dark green
+
 ```
 
 ### Transaction Type Matching
@@ -509,10 +463,10 @@ flowchart LR
     AIR -.->|Does NOT Match| ULA
     ULR -.->|Does NOT Match| AIA
 
-    style AIR fill:#bbdefb
-    style ULR fill:#bbdefb
-    style AIA fill:#c8e6c9
-    style ULA fill:#c8e6c9
+    style AIR fill:#1565c0,stroke:#000,stroke-width:1px   %% Dark blue
+    style ULR fill:#1976d2,stroke:#000,stroke-width:1px   %% Medium-dark blue
+    style AIA fill:#2e7d32,stroke:#000,stroke-width:1px   %% Dark green
+    style ULA fill:#1b5e20,stroke:#000,stroke-width:1px   %% Deep green
 ```
 
 ---
@@ -562,7 +516,7 @@ flowchart LR
 **Key Features:**
 - Singleton pattern for centralized state
 - Session-Id based transaction matching
-- Type-pair validation (AIR↔AIA, ULR↔ULA)
+- Type-pair validation (AIR ↔ AIA, ULR ↔ ULA)
 - Duplicate request detection
 
 ### SummaryReporter
