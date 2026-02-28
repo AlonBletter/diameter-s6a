@@ -9,7 +9,7 @@ A Java application that processes Diameter S6a protocol messages from CSV files,
 ## AI Disclosure
 
 This project was developed with AI assistance:
-- **Source Code:** ~25% AI-assisted (boilerplate, scaffolding, logging, design decisions)
+- **Source Code:** ~50% AI-assisted (boilerplate, scaffolding, logging, design decisions)
 - **Test Suite:** ~95% AI-generated (test classes, data files, utilities)
 - **Documentation:** AI-authored based on codebase analysis
 
@@ -125,6 +125,8 @@ For dynamic extensibility (e.g., plugin-based AVPs), we can use reflection or co
 | **Unit**        | Components in isolation (Parser, Factory, Validator, TransactionManager) |
 | **Integration** | Full pipeline with realistic data                                        |
 | **Data-Driven** | Parameterized CSV scenarios                                              |
+
+Over 90% code coverage across all layers!
 
 ### Test Data Files (`src/test/resources/testdata/`)
 
