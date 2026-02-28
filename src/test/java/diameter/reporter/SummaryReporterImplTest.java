@@ -18,7 +18,6 @@ class SummaryReporterImplTest {
 
     private SummaryReporter reporter;
     private ByteArrayOutputStream outputStream;
-    private ByteArrayOutputStream errorStream;
     private PrintStream originalOut;
     private PrintStream originalErr;
 
@@ -26,11 +25,9 @@ class SummaryReporterImplTest {
     void setUp() {
         reporter = new SummaryReporterImpl();
         outputStream = new ByteArrayOutputStream();
-        errorStream = new ByteArrayOutputStream();
         originalOut = System.out;
         originalErr = System.err;
         System.setOut(new PrintStream(outputStream));
-        System.setErr(new PrintStream(errorStream));
     }
 
     @org.junit.jupiter.api.AfterEach
