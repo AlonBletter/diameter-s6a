@@ -22,17 +22,20 @@ import java.util.List;
 public final class AppManager {
     private static final Logger LOG = LoggerFactory.getLogger(AppManager.class);
 
+    private final FileReader         fileReader;
     private final CsvParser          csvParser;
     private final MessageFactory     messageFactory;
     private final MessageValidator   validator;
     private final TransactionManager transactionManager;
     private final SummaryReporter    summaryReporter;
 
-    public AppManager(CsvParser csvParser,
+    public AppManager(FileReader fileReader,
+                      CsvParser csvParser,
                       MessageFactory messageFactory,
                       TransactionManager transactionManager,
                       MessageValidator validator,
                       SummaryReporter summaryReporter) {
+        this.fileReader = fileReader;
         this.csvParser = csvParser;
         this.messageFactory = messageFactory;
         this.validator = validator;
@@ -95,7 +98,7 @@ public final class AppManager {
     }
 
     private List<CsvRow> getCsvRows(String[] args) {
-        List<String> csvContent = FileReader.getLinesFromFile(args);
+        List<String> csvContent = fileReader.getLinesFromFile(args);
         return csvParser.parse(csvContent);
     }
 }

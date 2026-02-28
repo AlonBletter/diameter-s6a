@@ -55,6 +55,7 @@ classDiagram
     
     %% Application Layer
     class AppManager {
+        -FileReader fileReader
         -CsvParser csvParser
         -MessageFactory messageFactory
         -MessageValidator validator
@@ -64,6 +65,16 @@ classDiagram
         -handleMessagesToTransactions(List~CsvRow~) void
         -processSingleRow(CsvRow) ProcessingResult
         -getCsvRows(String[]) List~CsvRow~
+    }
+
+    %% IO Layer
+    class FileReader {
+        <<interface>>
+        +getLinesFromFile(String[]) List~String~
+    }
+
+    class FileReaderImpl {
+        +getLinesFromFile(String[]) List~String~
     }
 
     %% CSV Layer
@@ -272,6 +283,8 @@ classDiagram
     }
 
     %% Relationships
+    FileReader <|.. FileReaderImpl
+
     CsvParser <|.. CsvParserImpl
     CsvParserImpl --> CsvRow : creates
     CsvParserImpl --> CsvColumn : uses
@@ -304,6 +317,7 @@ classDiagram
     TransactionException <|-- DuplicateTransactionException
     TransactionException <|-- UnexpectedTransactionAnswerException
 
+    AppManager --> FileReader : uses
     AppManager --> CsvParser : uses
     AppManager --> MessageFactory : uses
     AppManager --> MessageValidator : uses
@@ -606,7 +620,8 @@ diameter/
 │   └── validation/
 │       └── DiameterMessageValidationException.java
 ├── io/
-│   └── FileReader.java
+│   ├── FileReader.java
+│   └── FileReaderImpl.java
 ├── reporter/
 │   ├── ProcessingResult.java
 │   ├── SummaryReporter.java

@@ -2,6 +2,7 @@ package diameter.app;
 
 import diameter.csv.parser.CsvParserImpl;
 import diameter.domain.factory.MessageFactoryImpl;
+import diameter.io.FileReaderImpl;
 import diameter.reporter.SummaryReporterImpl;
 import diameter.transaction.TransactionManagerImpl;
 import diameter.validator.MessageValidatorImpl;
@@ -16,9 +17,9 @@ public final class DiameterApp {
         long startTime = System.currentTimeMillis();
 
         try {
-            AppManager appManager =
-                    new AppManager(new CsvParserImpl(), new MessageFactoryImpl(), TransactionManagerImpl.getInstance(),
-                                   new MessageValidatorImpl(), new SummaryReporterImpl());
+            AppManager appManager = new AppManager(new FileReaderImpl(), new CsvParserImpl(), new MessageFactoryImpl(),
+                                                   TransactionManagerImpl.getInstance(), new MessageValidatorImpl(),
+                                                   new SummaryReporterImpl());
             appManager.run(args);
 
             long duration = System.currentTimeMillis() - startTime;
