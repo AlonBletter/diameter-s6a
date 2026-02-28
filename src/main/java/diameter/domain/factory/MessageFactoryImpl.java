@@ -4,11 +4,15 @@ import diameter.csv.model.CsvRow;
 import diameter.domain.MessageType;
 import diameter.domain.message.*;
 import diameter.exception.validation.DiameterMessageValidationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.function.Function;
 
 public class MessageFactoryImpl implements MessageFactory {
+    private static final Logger LOG = LoggerFactory.getLogger(MessageFactoryImpl.class);
+
     private static final Map<MessageType, MessageDefinition> messageDefinitions = Map.of(
             MessageType.AIR, new MessageDefinition(true, row -> new AIR(
                     row.getSessionId(),
@@ -42,6 +46,7 @@ public class MessageFactoryImpl implements MessageFactory {
     @Override
     public DiameterMessage createDiameterMessage(CsvRow csvRow) {
         if (csvRow == null || csvRow.getMessageType() == null) {
+            LOG.error("Invalid input: csvRow or messageType is null");
             throw new IllegalArgumentException("CSV csvRow or message type cannot be null");
         }
 
@@ -49,6 +54,7 @@ public class MessageFactoryImpl implements MessageFactory {
         MessageDefinition definition = messageDefinitions.get(messageType);
 
         if (definition == null) {
+            LOG.error("Unsupported message type: {}", messageType);
             throw new IllegalArgumentException("Unsupported message type: " + messageType);
         }
 

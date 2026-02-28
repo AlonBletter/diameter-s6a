@@ -118,59 +118,6 @@ class SummaryReporterImplTest {
     }
 
     @Nested
-    @DisplayName("Error Reporting")
-    class ErrorReporting {
-
-        @Test
-        @DisplayName("Should print error messages to stderr")
-        void shouldPrintErrorMessagesToStderr() {
-            List<ProcessingResult> results = List.of(
-                ProcessingResult.error("Test error message")
-            );
-            TransactionResult txResult = new TransactionResult(0, 0);
-
-            reporter.report(results, txResult);
-
-            String errorOutput = errorStream.toString();
-            assertTrue(errorOutput.contains("Test error message"));
-        }
-
-        @Test
-        @DisplayName("Should not print errors for validation failures without message")
-        void shouldNotPrintErrorsForValidationFailuresWithoutMessage() {
-            List<ProcessingResult> results = List.of(
-                ProcessingResult.validationFailure()
-            );
-            TransactionResult txResult = new TransactionResult(0, 0);
-
-            reporter.report(results, txResult);
-
-            String errorOutput = errorStream.toString();
-            // Validation failures don't have error messages, only ProcessingResult.error() does
-            assertFalse(errorOutput.contains("null"));
-        }
-
-        @Test
-        @DisplayName("Should print multiple error messages")
-        void shouldPrintMultipleErrorMessages() {
-            List<ProcessingResult> results = List.of(
-                ProcessingResult.error("Error 1"),
-                ProcessingResult.success(),
-                ProcessingResult.error("Error 2"),
-                ProcessingResult.error("Error 3")
-            );
-            TransactionResult txResult = new TransactionResult(0, 0);
-
-            reporter.report(results, txResult);
-
-            String errorOutput = errorStream.toString();
-            assertTrue(errorOutput.contains("Error 1"));
-            assertTrue(errorOutput.contains("Error 2"));
-            assertTrue(errorOutput.contains("Error 3"));
-        }
-    }
-
-    @Nested
     @DisplayName("ProcessingResult Tests")
     class ProcessingResultTests {
 

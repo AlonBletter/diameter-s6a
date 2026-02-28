@@ -13,11 +13,15 @@ import diameter.io.FileReader;
 import diameter.transaction.TransactionResult;
 import diameter.validator.MessageValidator;
 import diameter.validator.ValidationResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class AppManager {
+    private static final Logger LOG = LoggerFactory.getLogger(AppManager.class);
+
     private final CsvParser          csvParser;
     private final MessageFactory     messageFactory;
     private final MessageValidator   validator;
@@ -38,11 +42,14 @@ public final class AppManager {
 
     public void run(String[] args) {
         if (args == null || args.length != 1) {
-            System.err.println("Usage: <app> <path-to-csv>");
+            LOG.error("Invalid arguments: expected exactly 1 argument (CSV file path)");
             return;
         }
 
+        LOG.info("Processing CSV file: {}", args[0]);
         List<CsvRow> rows = getCsvRows(args);
+        LOG.info("Parsed {} data rows from CSV", rows.size());
+
         handleMessagesToTransactions(rows);
     }
 
@@ -65,6 +72,8 @@ public final class AppManager {
             ValidationResult validationResult = validator.validate(diameterMessage);
 
             if (!validationResult.isValid()) {
+                LOG.warn("Validation failed for message: sessionId = {}, type = {}, errors = {}",
+                        csvRow.getSessionId(), csvRow.getMessageType(), validationResult.getErrors());
                 retVal = ProcessingResult.validationFailure();
             }
             else {

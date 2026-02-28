@@ -4,11 +4,15 @@ import diameter.domain.message.DiameterMessage;
 import diameter.domain.MessageType;
 import diameter.exception.transaction.DuplicateTransactionException;
 import diameter.exception.transaction.UnexpectedTransactionAnswerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class TransactionManagerImpl implements TransactionManager {
+    private static final Logger LOG = LoggerFactory.getLogger(TransactionManagerImpl.class);
+
     private static volatile TransactionManagerImpl        instance;
     private                 int                           numberOfCompleteTransactions   = 0;
     private                 int                           numberOfIncompleteTransactions = 0;
@@ -33,6 +37,7 @@ public class TransactionManagerImpl implements TransactionManager {
     @Override
     public void processDiameterMessage(DiameterMessage diameterMessage) {
         if (diameterMessage == null || diameterMessage.getSessionId() == null) {
+            LOG.error("Invalid message: message or sessionId is null");
             throw new IllegalArgumentException("Message and session ID cannot be null");
         }
 
@@ -50,23 +55,29 @@ public class TransactionManagerImpl implements TransactionManager {
     }
 
     private void handleRequestMessage(DiameterMessage message) {
-        if (transactionsBySessionId.containsKey(message.getSessionId())) {
-            throw new DuplicateTransactionException(message.getSessionId());
+        String sessionId = message.getSessionId();
+        if (transactionsBySessionId.containsKey(sessionId)) {
+            throw new DuplicateTransactionException(sessionId);
         }
 
         incrementIncompleteTransactions();
-        transactionsBySessionId.put(message.getSessionId(), new Transaction(message));
+        transactionsBySessionId.put(sessionId, new Transaction(message));
     }
 
     private void handleAnswerMessage(DiameterMessage message) {
-        Transaction transaction = transactionsBySessionId.get(message.getSessionId());
+        String sessionId = message.getSessionId();
+        Transaction transaction = transactionsBySessionId.get(sessionId);
         if (transaction == null) {
-            throw new UnexpectedTransactionAnswerException(message.getSessionId());
+            throw new UnexpectedTransactionAnswerException(sessionId);
         }
 
         if (isMessageTypeMatch(transaction.getRequest(), message)) {
             transaction.setAnswer(message);
             incrementCompleteTransactions();
+        }
+        else {
+            LOG.warn("Transaction type mismatch: sessionId = {}, expectedAnswer = {}, actualAnswer = {}",
+                    sessionId, answerByRequest.get(transaction.getRequest().getMessageType()), message.getMessageType());
         }
     }
 

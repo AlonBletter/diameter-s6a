@@ -9,7 +9,7 @@ A Java application that processes Diameter S6a protocol messages from CSV files,
 ## AI Disclosure
 
 This project was developed with AI assistance:
-- **Source Code:** ~20% AI-assisted (boilerplate, scaffolding, design decisions)
+- **Source Code:** ~25% AI-assisted (boilerplate, scaffolding, logging, design decisions)
 - **Test Suite:** ~95% AI-generated (test classes, data files, utilities)
 - **Documentation:** AI-authored based on codebase analysis
 
@@ -229,6 +229,21 @@ classDiagram
 ./gradlew test                            # Run tests
 ./gradlew run --args="path/to/input.csv"  # Run application
 ```
+
+### Logging
+
+The application uses **SLF4J** with **Logback** for production-grade logging.
+
+| Log Level | Purpose |
+|-----------|---------|
+| **INFO** | Startup/shutdown, file I/O, processing summaries |
+| **WARN** | Validation failures, skipped rows, transaction errors |
+| **ERROR** | Fatal errors, file read failures, invalid arguments |
+| **DEBUG** | Detailed transaction state, parsing details |
+
+**Configuration:** `src/main/resources/logback.xml`
+
+**Log files:** `logs/diameter-s6a.log` (rotated daily, 30-day retention)
 
 ---
 
