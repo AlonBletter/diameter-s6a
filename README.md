@@ -97,6 +97,7 @@ For dynamic extensibility (e.g., plugin-based AVPs), we can use reflection or co
 ### CPU
 - **Complexity:** O(n×m) where n = rows, m = fields per row
 - **Per-message:** O(1) HashMap lookups and validation
+- **SummaryReporter:** O(n) at the worst case - iterating over all processed rows.
 
 ### Memory
 
@@ -109,7 +110,7 @@ For dynamic extensibility (e.g., plugin-based AVPs), we can use reflection or co
 
 ### Concurrency
 
-**Current:** Single-threaded; no synchronization needed.
+**Current:** Single-threaded.
 
 **If parallelized:** Use `ConcurrentHashMap`, atomic counters, and consider Session-Id partitioning.
 
