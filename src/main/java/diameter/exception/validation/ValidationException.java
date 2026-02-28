@@ -1,4 +1,4 @@
-package diameter.validation.exception;
+package diameter.exception.validation;
 
 public class ValidationException extends RuntimeException {
     public ValidationException(String message) {

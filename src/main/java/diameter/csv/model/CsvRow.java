@@ -1,32 +1,35 @@
-package diameter.domain;
+package diameter.csv.model;
 
-public abstract class DiameterMessage {
+import diameter.domain.MessageType;
+
+public final class CsvRow {
     private final MessageType messageType;
     private final boolean     isRequest;
     private final String      sessionId;
     private final String      originHost;
     private final String      originRealm;
     private final String      userName;
+    private final String      visitedPlmnId;
+    private final String      resultCode;
 
-    public DiameterMessage(MessageType messageType,
-                           boolean isRequest,
-                           String sessionId,
-                           String originHost,
-                           String originRealm,
-                           String userName) {
+    public CsvRow(
+            MessageType messageType,
+            boolean isRequest,
+            String sessionId,
+            String originHost,
+            String originRealm,
+            String userName,
+            String visitedPlmnId,
+            String resultCode
+    ) {
         this.messageType = messageType;
         this.isRequest = isRequest;
         this.sessionId = sessionId;
         this.originHost = originHost;
         this.originRealm = originRealm;
         this.userName = userName;
-    }
-
-    public boolean isMessageValid() {
-        return sessionId != null && !sessionId.isEmpty() &&
-               originHost != null && !originHost.isEmpty() &&
-               originRealm != null && !originRealm.isEmpty() &&
-               userName != null && !userName.isEmpty();
+        this.visitedPlmnId = visitedPlmnId;
+        this.resultCode = resultCode;
     }
 
     public MessageType getMessageType() {
@@ -51,5 +54,13 @@ public abstract class DiameterMessage {
 
     public String getUserName() {
         return userName;
+    }
+
+    public String getVisitedPlmnId() {
+        return visitedPlmnId;
+    }
+
+    public String getResultCode() {
+        return resultCode;
     }
 }

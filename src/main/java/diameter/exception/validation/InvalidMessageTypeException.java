@@ -1,4 +1,4 @@
-package diameter.validation.exception;
+package diameter.exception.validation;
 
 public class InvalidMessageTypeException extends ValidationException {
     public InvalidMessageTypeException(String message) {

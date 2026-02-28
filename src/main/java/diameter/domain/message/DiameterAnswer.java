@@ -1,25 +1,23 @@
-package diameter.domain.answer;
+package diameter.domain.message;
 
-import diameter.domain.DiameterMessage;
 import diameter.domain.MessageType;
+import diameter.validator.ValidationResult;
 
 public abstract class DiameterAnswer extends DiameterMessage {
     private final String resultCode;
 
     protected DiameterAnswer(MessageType messageType,
-                             boolean isRequest,
                              String sessionId,
                              String originHost,
                              String originRealm,
                              String userName,
                              String resultCode) {
-        super(messageType, isRequest, sessionId, originHost, originRealm, userName);
+        super(messageType, false, sessionId, originHost, originRealm, userName);
         this.resultCode = resultCode;
     }
 
     @Override
-    public boolean isMessageValid() {
-        return super.isMessageValid() && getMessageType() != null && !this.getIsRequest() &&
-               resultCode != null && !resultCode.isEmpty();
+    public void validate(ValidationResult result) {
+        require(resultCode, "Result-Code is required", result);
     }
 }

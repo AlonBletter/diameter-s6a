@@ -1,13 +1,20 @@
 package diameter.transaction;
 
-import diameter.domain.DiameterMessage;
+import diameter.domain.message.DiameterMessage;
+import diameter.domain.MessageType;
+import diameter.exception.transaction.TransactionException;
+import diameter.exception.transaction.UnexpectedTransactionAnswerException;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class TransactionManager {
-    private final           Map<String, DiameterMessage> transactionsBySessionId = new HashMap<>();
-    private static volatile TransactionManager           instance;
+    private static volatile TransactionManager            instance;
+    private                 int                           numberOfCompleteTransactions   = 0;
+    private                 int                           numberOfIncompleteTransactions = 0;
+    private final           Map<String, Transaction>      transactionsBySessionId        = new HashMap<>();
+    private static final    Map<MessageType, MessageType> requestAnswerMap               =
+            Map.of(MessageType.AIR, MessageType.AIA, MessageType.ULR, MessageType.ULA);
 
     private TransactionManager() {}
 
@@ -19,21 +26,62 @@ public class TransactionManager {
                 }
             }
         }
+
         return instance;
     }
 
-    public void addTransaction(DiameterMessage message) {
-        if (message != null && message.getSessionId() != null) {
-            transactionsBySessionId.put(message.getSessionId(), message);
+    public void addMessage(DiameterMessage message) {
+        if (message == null || message.getSessionId() == null) {
+            throw new IllegalArgumentException("Message and session ID cannot be null");
+        }
+
+        if (message.getIsRequest()) {
+            handleRequestMessage(message);
+        } else {
+            handleAnswerMessage(message);
         }
     }
 
-    public DiameterMessage getTransaction(String sessionId) {
-        return transactionsBySessionId.get(sessionId);
+    public int getNumberOfCompleteTransactions() {
+        return numberOfCompleteTransactions;
     }
 
-    public void removeTransaction(String sessionId) {
-        transactionsBySessionId.remove(sessionId);
+    public int getNumberOfIncompleteTransactions() {
+        return numberOfIncompleteTransactions;
+    }
+
+    private void handleRequestMessage(DiameterMessage message) {
+        if (transactionsBySessionId.containsKey(message.getSessionId())) {
+            throw new TransactionException("Transaction with session ID " + message.getSessionId() + " already exists");
+        }
+
+        incrementIncompleteTransactions();
+        transactionsBySessionId.put(message.getSessionId(), new Transaction(message));
+    }
+
+    private void handleAnswerMessage(DiameterMessage message) {
+        Transaction transaction = transactionsBySessionId.get(message.getSessionId());
+        if (transaction == null) {
+            throw new UnexpectedTransactionAnswerException(message.getSessionId());
+        }
+
+        if (isMessageTypeMatch(transaction.getRequest(), message)) {
+            transaction.setAnswer(message);
+            incrementCompleteTransactions();
+        }
+    }
+
+    private boolean isMessageTypeMatch(DiameterMessage request, DiameterMessage message) {
+        return requestAnswerMap.get(request.getMessageType()) == message.getMessageType();
+    }
+
+    private void incrementCompleteTransactions() {
+        numberOfCompleteTransactions++;
+        numberOfIncompleteTransactions--;
+    }
+
+    private void incrementIncompleteTransactions() {
+        numberOfIncompleteTransactions++;
     }
 }
 
