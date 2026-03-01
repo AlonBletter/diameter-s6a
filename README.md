@@ -61,6 +61,16 @@ See [Class Diagram](#class-diagram) for high-level architecture.
 | **Factory Method**  | `MessageFactory` creates concrete types (`AIR`, `AIA`, `ULR`, `ULA`) from `MessageType` enum |
 | **Singleton**       | `TransactionManagerImpl` uses double-checked locking for centralized state                   |
 | **Template Method** | `DiameterMessage.validate()` defines structure; subclasses add type-specific rules           |
+| **Strategy**        | Each layer (IO, Parsing, Validation, Transaction, Reporting) is an interchangeable strategy  |
+
+### Dependency Management (Dependency Injection)
+
+The `AppManager` is wired using **constructor injection** (dependencies are passed in rather than created internally).
+
+**Benefits:**
+- **Loose coupling:** depends on interfaces, not implementations
+- **Testability:** easy to inject mocks/stubs
+- **Swapability:** implementations can be replaced without changing orchestration code
 
 ### Validation Separation
 
