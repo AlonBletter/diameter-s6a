@@ -97,8 +97,9 @@ For dynamic extensibility (e.g., plugin-based AVPs), we can use reflection or co
 
 ### Statistics Tradeoff
 
-**Chosen:** Coupled with `AppManager` for O(1) updates during processing.  
-**Alternative:** Separate collector with O(n) post-processing. Acceptable tradeoff for this scope.
+**Chosen:** Derive statistics at the end from the collected processing results (**O(n)** post-processing).
+
+**Alternative:** Update counters during processing (**O(1)** per message) to avoid the final aggregation pass.
 
 ---
 
