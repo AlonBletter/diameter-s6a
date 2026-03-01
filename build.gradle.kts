@@ -1,9 +1,16 @@
 plugins {
     id("java")
+    id("application")
 }
 
 group = "org.example"
 version = "1.0-SNAPSHOT"
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
 
 repositories {
     mavenCentral()
@@ -26,6 +33,9 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+application {
+    mainClass.set("diameter.app.DiameterApp")
+}
 
 tasks.test {
     useJUnitPlatform()

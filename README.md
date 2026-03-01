@@ -236,7 +236,7 @@ classDiagram
 
 ## Getting Started
 
-**Prerequisites:** Java 17+, Gradle 8.x (wrapper included)
+**Prerequisites:** Java 21+, Gradle 8.x (wrapper included)
 
 ```bash
 ./gradlew build                           # Build
@@ -244,16 +244,68 @@ classDiagram
 ./gradlew run --args="path/to/input.csv"  # Run application
 ```
 
+### Docker
+
+Build a single runnable image:
+
+```bash
+docker build -t diameter-s6a .
+```
+
+Run the processor by mounting a CSV into the container (the app expects exactly one argument: the CSV path):
+
+```bash
+docker run --rm \
+  -v "$PWD/path/to/input.csv:/data/input.csv:ro" \
+  diameter-s6a /data/input.csv
+```
+
+#### Run with bundled test CSV files
+
+These CSVs live under `src/test/resources/testdata/`.
+
+```bash
+# Happy path
+docker run --rm \
+  -v "$PWD/src/test/resources/testdata/valid_complete_transactions.csv:/data/input.csv:ro" \
+  diameter-s6a /data/input.csv
+
+# Unanswered requests / open transactions
+docker run --rm \
+  -v "$PWD/src/test/resources/testdata/open_transactions.csv:/data/input.csv:ro" \
+  diameter-s6a /data/input.csv
+
+# Missing AVPs / invalid messages
+docker run --rm \
+  -v "$PWD/src/test/resources/testdata/invalid_messages.csv:/data/input.csv:ro" \
+  diameter-s6a /data/input.csv
+
+# Request/Answer type mismatches
+docker run --rm \
+  -v "$PWD/src/test/resources/testdata/type_mismatch.csv:/data/input.csv:ro" \
+  diameter-s6a /data/input.csv
+
+# Answers arriving before requests (ordering edge case)
+docker run --rm \
+  -v "$PWD/src/test/resources/testdata/out_of_order_answers.csv:/data/input.csv:ro" \
+  diameter-s6a /data/input.csv
+
+# Spec-based example dataset
+docker run --rm \
+  -v "$PWD/src/test/resources/testdata/spec_example.csv:/data/input.csv:ro" \
+  diameter-s6a /data/input.csv
+```
+
 ### Logging
 
 The application uses **SLF4J** with **Logback** for production-grade logging.
 
-| Log Level | Purpose |
-|-----------|---------|
-| **INFO** | Startup/shutdown, file I/O, processing summaries |
-| **WARN** | Validation failures, skipped rows, transaction errors |
-| **ERROR** | Fatal errors, file read failures, invalid arguments |
-| **DEBUG** | Detailed transaction state, parsing details |
+| Log Level | Purpose                                               |
+|-----------|-------------------------------------------------------|
+| **INFO**  | Startup/shutdown, file I/O, processing summaries      |
+| **WARN**  | Validation failures, skipped rows, transaction errors |
+| **ERROR** | Fatal errors, file read failures, invalid arguments   |
+| **DEBUG** | Detailed transaction state, parsing details           |
 
 **Configuration:** `src/main/resources/logback.xml`
 
